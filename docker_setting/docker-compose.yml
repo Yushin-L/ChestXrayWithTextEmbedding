@@ -1,0 +1,19 @@
+services:
+  cxr_train:
+    build:
+      context: .  # Dockerfile이 있는 디렉토리
+      dockerfile: Dockerfile
+    image: cxr_train:latest
+    container_name: cxr_train
+    volumes:
+      - /data:/data
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["2","3"]
+              capabilities: [gpu]
+    runtime: nvidia
+    entrypoint: accelerate launch --multi_gpu --num_processes 2 /data/code/CXR_embedding_research/train_with_accelerate.py --seed 42
