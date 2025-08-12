@@ -65,7 +65,7 @@ def text2embedding(client, model, text):
     return responses.data[0].embedding
 
 def main():
-    df = pd.read_csv('/data/mimic3_cxr_jpg/mimic-cxr-dataset.csv')
+    df = pd.read_csv('/data/code/CXR_embedding_research/processed_dataset.csv')
     df = standardize_view_position_direct(df)
     df = df[(df['ViewPosition'] == "PA") | (df['ViewPosition'] == "AP")].reset_index()    
 
@@ -78,16 +78,23 @@ def main():
     models = client.models.list()
     model = models.data[0].id
 
-    embedding_rows = []
+    embedding_1_rows = []
+    embedding_2_rows = []
     for idx, row in tqdm(df.iterrows()):
-        note = load_text('/data/mimic3_cxr_jpg/'+row['path'])
-        note = text_processing(note)
-        embedding = text2embedding(client, model, note)
-        embedding_rows.append(embedding)
-    
-    df['embeddings'] = embedding_rows
-    df.to_csv('/data/mimic3_cxr_jpg/train_with_view_embeddings.csv',encoding='utf8', index=False)
+        note_1 = load_text('/data/mimic3_cxr_jpg/'+row['path'])
+        note_1 = text_processing(note_1)
+        note_2 = row['paraphrased_note']
+        embedding_1 = text2embedding(client, model, note_1)
+        embedding_1_rows.append(embedding_1)
+        if note_2 != 'Fail':
+            embedding_2 = text2embedding(client, model, note_2)
+            embedding_2_rows.append(embedding_2)
+        else:
+            embedding_2_rows.append('Fail')
 
+    df['embeddings_1'] = embedding_1_rows
+    df['embeddings_2'] = embedding_2_rows
+    df.to_csv('/data/mimic3_cxr_jpg/train_with_view_embeddings_aug.csv',encoding='utf8', index=False)
 
 if __name__=='__main__':
     main()
