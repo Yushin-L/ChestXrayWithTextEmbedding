@@ -91,6 +91,9 @@ def main():
             embedding_2_rows.append(embedding_2)
         else:
             embedding_2_rows.append('Fail')
+        
+        if idx % 1000 == 0:
+            print(idx)
 
     df['embeddings_1'] = embedding_1_rows
     df['embeddings_2'] = embedding_2_rows

@@ -85,12 +85,9 @@ def text2embedding(client, model, text):
     return responses.data[0].embedding
 
 def main():
-    df = pd.read_csv('/data/ReXGradient-160K/metadata/train_metadata.csv')
-    with open('/data/ReXGradient-160K/metadata/train_metadata_view_position.json', 'r', encoding='utf-8') as file:
-        json_data = json.load(file)
-    df2 = process_multiple_medical_records(list(json_data.values()))
-    df2 = standardize_view_position_direct(df2)
-    df2 = df2[(df2['ImageViewPosition']=='AP') | (df2['ImageViewPosition']=='PA')]
+    df = pd.read_csv('/data/code/CXR_embedding_research/processed_dataset_rex.csv')
+    df = standardize_view_position_direct(df)
+    df = df[(df['ImageViewPosition']=='AP') | (df['ImageViewPosition']=='PA')]
     openai_api_key = "abc123"
     openai_api_base = "http://localhost:8002/v1"
     client = OpenAI(
@@ -99,14 +96,25 @@ def main():
     )
     models = client.models.list()
     model = models.data[0].id
-    embedding_rows = []
-    for idx, row in tqdm(df2.iterrows()):
-        note = "Findings: {} \nImpression: {}".format(row['Findings'], row['Impression'])
-        embedding = text2embedding(client, model, note)
-        embedding_rows.append(embedding)
-    
-    df2['embeddings'] = embedding_rows
-    df2.to_csv('/data/ReXGradient-160K/metadata/train_with_view_embeddings.csv',encoding='utf8', index=False)
+    embedding_1_rows = []
+    embedding_2_rows = []
+    for idx, row in tqdm(df.iterrows()):
+        note_1 = "Findings: {} \nImpression: {}".format(row['Findings'], row['Impression'])
+        note_2 = row['paraphrased_note']
+        embedding_1 = text2embedding(client, model, note_1)
+        embedding_1_rows.append(embedding_1)
+        if note_2 != 'Fail':
+            embedding_2 = text2embedding(client, model, note_2)
+            embedding_2_rows.append(embedding_2)
+        else:
+            embedding_2_rows.append('Fail')
+        
+        if idx % 1000 == 0:
+            print(idx)            
+        
+    df['embeddings_1'] = embedding_1_rows
+    df['embeddings_2'] = embedding_2_rows
+    df.to_csv('/data/ReXGradient-160K/metadata/train_with_view_embeddings_aug.csv',encoding='utf8', index=False)
 
 
 if __name__=='__main__':
