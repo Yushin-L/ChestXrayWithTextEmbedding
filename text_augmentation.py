@@ -399,7 +399,7 @@ def process_single_row(args):
     except Exception as e:
         
         with log_lock:
-            logging.error(f"처리 실패 - idx: {idx}, 소요시간: {duration:.2f}초, 오류: {str(e)}, Thread: {threading.current_thread().name}")
+            logging.error(f"처리 실패 - idx: {idx}, 오류: {str(e)}, Thread: {threading.current_thread().name}")
             
         return idx, "Fail", False, str(e)
 
